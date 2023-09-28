@@ -1,0 +1,26 @@
+server:
+  port: 8888
+#spring:
+#  datasource:
+#    username: root
+#    password: qwer1234
+#    url: jdbc:mysql://localhost:3306/study-spring?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#mybatis-plus:
+#  mapper-locations: classpath:/mapper/**/*.xml
+#  global-config:
+#    db-config:
+#      id-type: auto
+#      logic-delete-value: 1
+#      logic-not-delete-value: 0
+logging:
+  level:
+    com.roydon: debug
+spring:
+  rabbitmq:
+    virtual-host: /
+    host: 106.14.105.101
+    port: 5672
+    username: roydon
+    password: qwer1234
+
