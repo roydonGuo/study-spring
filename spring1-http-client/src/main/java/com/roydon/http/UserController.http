@@ -1,0 +1,19 @@
+### 用户登录 /user/login：
+POST {{url}}/user/login
+Content-Type: application/x-www-form-urlencoded
+
+username = {{username}} &
+password = {{password}}
+
+### 获取用户 /user/get-current：
+GET {{url}}/user/get-current?full=true
+Authorization: {{token}}
+
+### 测试 /user/update：更新成功
+POST {{url}}/user/update
+Content-Type: application/json
+
+{
+  "nickname": "我是昵称",
+  "gender": 1
+}
