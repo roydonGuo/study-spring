@@ -1,11 +1,22 @@
 package com.roydon.publisher;
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageBuilder;
+import org.springframework.amqp.core.MessageDeliveryMode;
+import org.springframework.amqp.core.MessagePostProcessor;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import javax.annotation.Resource;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.UUID;
 
 /**
  * PubrisherTest
@@ -13,6 +24,7 @@ import javax.annotation.Resource;
  * @AUTHOR: roydon
  * @DATE: 2023/9/27
  **/
+@Slf4j
 @SpringBootTest
 public class PublisherTest {
 
@@ -75,6 +87,102 @@ public class PublisherTest {
 //        String routingKey = "usa.news";
         String routingKey = "china.weather";
         rabbitTemplate.convertAndSend(exchange, routingKey, "topic msg - " + routingKey);
+    }
+
+    /**
+     * 发送对象测试序列化结果：乱码
+     * rO0ABXNyABFqYXZhLnV0aWwuSGFzaE1hcAUH2sHDFmDRAwACRgAKbG9hZEZhY3RvckkACXRocmVzaG9sZHhwP0AAAAAAAAx3CAAAABAAAAACdAAEbmFtZXQA
+     * BnJveWRvbnQAA2FnZXNyABFqYXZhLmxhbmcuSW50ZWdlchLioKT3gYc4AgABSQAFdmFsdWV4cgAQamF2YS5sYW5nLk51bWJlcoaslR0LlOCLAgAAeHAAAAAU
+     * eA==
+     * <p>
+     * headers:
+     * content_type:	application/x-java-serialized-object
+     * <p>
+     * 发现默认是jdk序列化，不推荐,有安全漏洞
+     */
+    @Test
+    void testObjectQueue() {
+        String queue = "object.queue";
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("name", "roydon");
+        map.put("age", 20);
+        rabbitTemplate.convertAndSend(queue, map);
+    }
+
+    @Test
+    void testPublisherConfirm() {
+        // 1.创建CorrelationData
+        CorrelationData cd = new CorrelationData(UUID.randomUUID().toString());
+        // 2.给Future添加ConfirmCallback
+        cd.getFuture().addCallback(new ListenableFutureCallback<CorrelationData.Confirm>() {
+            @Override
+            public void onFailure(Throwable ex) {
+                // 2.1.Future发生异常时的处理逻辑，基本不会触发
+                log.error("send message fail", ex);
+            }
+
+            @Override
+            public void onSuccess(CorrelationData.Confirm result) {
+                // 2.2.Future接收到回执的处理逻辑，参数中的result就是回执内容
+                if (result.isAck()) { // result.isAck()，boolean类型，true代表ack回执，false 代表 nack回执
+                    log.debug("发送消息成功，收到 ack!");
+                } else { // result.getReason()，String类型，返回nack时的异常描述
+                    log.error("发送消息失败，收到 nack, reason : {}", result.getReason());
+                }
+            }
+        });
+        // 3.发送消息
+        rabbitTemplate.convertAndSend("zhujie.direct11", "blue11", "hello", cd);
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void testPageOut() {
+        Message msg = MessageBuilder.withBody("hello".getBytes(StandardCharsets.UTF_8))
+                .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
+                .build();
+        for (int i = 0; i < 200000; i++) {
+            rabbitTemplate.convertAndSend("simple.queue", msg);
+        }
+    }
+
+    /**
+     * 基于消息过期的死信队列
+     */
+    @Test
+    void testDlxQueue() {
+        String exchange = "expire.direct";
+        rabbitTemplate.convertAndSend(exchange, "dlx", "hello,expire message!", new MessagePostProcessor() {
+            @Override
+            public Message postProcessMessage(Message message) throws AmqpException {
+                message.getMessageProperties().setExpiration("10000");
+                return message;
+            }
+        });
+        log.info("带有过期时间的消息发送成功");
+    }
+
+    /**
+     * 发送延时消息
+     */
+    @Test
+    void testPublisherDelayMessage() {
+        // 1.创建消息
+        String message = "hello, delayed message";
+        // 2.发送消息，利用消息后置处理器添加消息头
+        rabbitTemplate.convertAndSend("delay.direct", "delay", message, new MessagePostProcessor() {
+            @Override
+            public Message postProcessMessage(Message message) throws AmqpException {
+                // 添加延迟消息属性
+                message.getMessageProperties().setDelay(5000);
+                return message;
+            }
+        });
     }
 
 }

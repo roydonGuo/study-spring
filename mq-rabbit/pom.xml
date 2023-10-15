@@ -25,17 +25,28 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
         <!-- AMQP依赖，包含RabbitMQ -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>com.rabbitmq</groupId>-->
-<!--            <artifactId>amqp-client</artifactId>-->
-<!--            <version>3.4.1</version>-->
-<!--        </dependency>-->
+        <!-- jackson消息转换器，防止乱码 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+        </dependency>
+
+        <!--        <dependency>-->
+        <!--            <groupId>com.rabbitmq</groupId>-->
+        <!--            <artifactId>amqp-client</artifactId>-->
+        <!--            <version>3.4.1</version>-->
+        <!--        </dependency>-->
 
     </dependencies>
 

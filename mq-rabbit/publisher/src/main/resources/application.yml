@@ -23,4 +23,13 @@ spring:
     port: 5672
     username: roydon
     password: qwer1234
-
+    connection-timeout: 1s # 连接超时时间
+    template:
+      retry:
+        enabled: true # 超时重试，阻塞式，为了性能考虑谨慎开启
+        initial-interval: 200ms # 失败后的初始等待时间
+        multiplier: 1
+        max-attempts: 3
+#      mandatory: true # 队列路由到交换机失败通知
+    publisher-confirm-type: correlated # 开启publisher confirm机制，并设置confirm类型
+    publisher-returns: true # 开启publisher return机制

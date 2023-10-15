@@ -8,6 +8,9 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+import java.util.Objects;
+
 /**
  * RabbitListener
  *
@@ -21,6 +24,7 @@ public class SpringRabbitListener {
     @RabbitListener(queues = "simple.queue")
     public void listenSimpleQueue(String msg) {
         log.debug(" [R] ==> {}", msg);
+//        throw new RuntimeException("消费者监听消息失败！抛出异常");
     }
 
     @RabbitListener(queues = "work.queue")
@@ -70,7 +74,10 @@ public class SpringRabbitListener {
      *
      * @param msg
      */
-    @RabbitListener(bindings = @QueueBinding(value = @Queue(name = "direct.queue11", durable = "true"), exchange = @Exchange(name = "zhujie.direct", type = ExchangeTypes.DIRECT), key = {"red", "blue"}))
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(name = "direct.queue11", durable = "true"),
+            exchange = @Exchange(name = "zhujie.direct", type = ExchangeTypes.DIRECT),
+            key = {"red", "blue"}))
     public void listenDirectQueueWithZhujie1(String msg) {
         log.info(" [Zhujie.direct1] ==> {}", msg);
     }
@@ -80,10 +87,41 @@ public class SpringRabbitListener {
      *
      * @param msg
      */
-    @RabbitListener(bindings = @QueueBinding(value = @Queue(name = "direct.queue12", durable = "true"), exchange = @Exchange(name = "zhujie.direct", type = ExchangeTypes.DIRECT), key = {"red", "yellow"}))
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(name = "direct.queue12", durable = "true"),
+            exchange = @Exchange(name = "zhujie.direct", type = ExchangeTypes.DIRECT),
+            key = {"red", "yellow"}))
     public void listenDirectQueueWithZhujie2(String msg) {
         log.debug(" [Zhujie.direct2] ==> {}", msg);
     }
 
+    @RabbitListener(queues = "object.queue")
+    public void listenObjectQueue(Map<String, Object> map) {
+        log.debug(" [map] ==> {}", map);
+    }
+
+    /**
+     * 死信队列监听器
+     *
+     * @param msg
+     */
+    @RabbitListener(queues = "dlx.queue")
+    public void listenDlxQueue(String msg) {
+        log.debug(" [dlx.queue] ==> {}", msg);
+    }
+
+    /**
+     * 延时消息
+     *
+     * @param msg
+     */
+    @RabbitListener(bindings = @QueueBinding(
+            value = @Queue(name = "delay.queue", durable = "true"),
+            exchange = @Exchange(name = "delay.direct", delayed = "true"),
+            key = "delay"
+    ))
+    public void listenDelayMessage(String msg) {
+        log.info("接收到delay.queue的延迟消息：{}", msg);
+    }
 
 }
